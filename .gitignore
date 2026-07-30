@@ -1,0 +1,9 @@
+venv/
+.env
+__pycache__/
+*.pyc
+.DS_Store
+
+# Live-generated run archives at repo root (contain real attack content) —
+# anchored so it doesn't also match the deliberate fixtures in examples/
+/archive_*.json

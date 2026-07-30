@@ -1,0 +1,14 @@
+name: AI Safety Regression Check
+description: Adaptive Gemma 4 red-teaming with a CI regression gate — fails the build if a new jailbreak category is found.
+
+inputs:
+  target_model:
+    description: Target model variant to check (v1 or v2)
+    required: false
+    default: v2
+
+runs:
+  using: docker
+  image: Dockerfile
+  args:
+    - ${{ inputs.target_model }}
