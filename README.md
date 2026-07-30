@@ -57,8 +57,8 @@ Copy `.env.example` to `.env` and fill in:
 
 | Variable | Required | Notes |
 |---|---|---|
-| `MODEL_PROVIDER` | No | `cloudflare` (default) or `gemini` |
-| `FALLBACK_PROVIDER` | No | `gemini` (default) — see Resilience below |
+| `MODEL_PROVIDER` | No | `cloudflare` (code default) or `gemini`. Currently overridden to `gemini` via `.env`/CI repo variable while Cloudflare's daily quota is exhausted. |
+| `FALLBACK_PROVIDER` | No | `gemini` (code default), currently `cloudflare` locally/in CI to match the swap above — see Resilience below |
 | `CLOUDFLARE_ACCOUNT_ID` | Yes, if using `cloudflare` | From the Cloudflare dashboard |
 | `CLOUDFLARE_API_TOKEN` | Yes, if using `cloudflare` | Workers AI-scoped API token |
 | `GEMINI_API_KEY` | Yes, if using `gemini` | Fallback provider, kept working alongside Cloudflare |
