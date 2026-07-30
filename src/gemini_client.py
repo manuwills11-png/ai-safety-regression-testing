@@ -17,6 +17,8 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import errors, types
 
+from .utils import QuotaExceededError
+
 MODEL_NAME = "gemma-4-26b-a4b-it"
 TIMEOUT_MS = 60_000  # HttpOptions.timeout is in milliseconds
 MAX_TRANSIENT_RETRIES = 3
@@ -40,20 +42,32 @@ def get_client():
 
 
 def generate_content_with_backoff(client, **kwargs):
-    """client.models.generate_content, retrying transient 504s/timeouts."""
+    """client.models.generate_content, retrying transient 504s/timeouts/429s.
+
+    A 429 is a ClientError (4xx), not a ServerError, so it's handled
+    separately: retried the same as other transient failures, but raised as
+    QuotaExceededError once retries are exhausted, so model_client.py can
+    fail over to another provider specifically on this. Other ClientErrors
+    (400, 401, ...) are real bugs, not transient — raised immediately.
+    """
     last_exc = None
     for attempt in range(MAX_TRANSIENT_RETRIES):
         try:
             return client.models.generate_content(**kwargs)
+        except errors.ClientError as exc:
+            if exc.code != 429:
+                raise
+            last_exc = QuotaExceededError(f"Gemini quota exceeded (429): {exc}")
         except TRANSIENT_EXCEPTIONS as exc:
             last_exc = exc
-            if attempt < MAX_TRANSIENT_RETRIES - 1:
-                sleep_seconds = BACKOFF_BASE_SECONDS * (2**attempt)
-                print(
-                    f"  Transient error ({exc!r}), retrying in {sleep_seconds}s "
-                    f"(attempt {attempt + 1}/{MAX_TRANSIENT_RETRIES})..."
-                )
-                time.sleep(sleep_seconds)
+
+        if attempt < MAX_TRANSIENT_RETRIES - 1:
+            sleep_seconds = BACKOFF_BASE_SECONDS * (2**attempt)
+            print(
+                f"  Transient error ({last_exc!r}), retrying in {sleep_seconds}s "
+                f"(attempt {attempt + 1}/{MAX_TRANSIENT_RETRIES})..."
+            )
+            time.sleep(sleep_seconds)
     raise last_exc
 
 

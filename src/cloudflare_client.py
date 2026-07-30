@@ -35,6 +35,8 @@ import time
 import requests
 from dotenv import load_dotenv
 
+from .utils import QuotaExceededError
+
 TIMEOUT_S = 60  # requests' timeout is in seconds, not milliseconds; matches
 # gemini_client.py's TIMEOUT_MS=60_000 after the same content-dependent
 # latency was observed on both providers
@@ -99,10 +101,16 @@ def _post_with_backoff(config, payload):
                         f"Cloudflare Workers AI request failed: {data.get('errors')}"
                     )
                 return data
-            last_exc = RuntimeError(
-                f"Cloudflare Workers AI returned transient status "
-                f"{response.status_code}: {response.text[:500]}"
-            )
+            if response.status_code == 429:
+                last_exc = QuotaExceededError(
+                    f"Cloudflare Workers AI returned 429 (quota exceeded): "
+                    f"{response.text[:500]}"
+                )
+            else:
+                last_exc = RuntimeError(
+                    f"Cloudflare Workers AI returned transient status "
+                    f"{response.status_code}: {response.text[:500]}"
+                )
 
         if attempt < MAX_TRANSIENT_RETRIES - 1:
             sleep_seconds = BACKOFF_BASE_SECONDS * (2**attempt)

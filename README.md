@@ -58,8 +58,17 @@ Copy `.env.example` to `.env` and fill in:
 | Variable | Required | Notes |
 |---|---|---|
 | `MODEL_PROVIDER` | No | `cloudflare` (default) or `gemini` |
+| `FALLBACK_PROVIDER` | No | `gemini` (default) — see Resilience below |
 | `CLOUDFLARE_ACCOUNT_ID` | Yes, if using `cloudflare` | From the Cloudflare dashboard |
 | `CLOUDFLARE_API_TOKEN` | Yes, if using `cloudflare` | Workers AI-scoped API token |
 | `GEMINI_API_KEY` | Yes, if using `gemini` | Fallback provider, kept working alongside Cloudflare |
 
 For the GitHub Action, set `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` as repo secrets.
+
+### Resilience: automatic provider failover
+
+If `MODEL_PROVIDER` returns a 429 (quota exceeded) even after its own
+retries are exhausted, that single call transparently fails over to
+`FALLBACK_PROVIDER` and logs a warning — one provider hitting a rate limit
+mid-run doesn't crash the whole discovery loop. This is invisible to
+`discovery.py`; it just gets a valid response either way.

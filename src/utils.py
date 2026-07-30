@@ -1,5 +1,16 @@
-"""Small shared helpers used across CLI-facing entry points."""
+"""Small shared helpers used across CLI-facing entry points and provider clients."""
 import sys
+
+
+class QuotaExceededError(RuntimeError):
+    """Raised by a provider client when a request is rejected for quota/rate-limit
+    reasons (HTTP 429), even after that provider's own retries are exhausted.
+
+    Kept distinct from other transient failures (5xx, network timeouts) so
+    model_client.py can trigger provider failover specifically on this, and
+    only this — a genuine 4xx bug elsewhere shouldn't be silently masked by
+    switching providers.
+    """
 
 
 def ensure_utf8_stdout() -> None:

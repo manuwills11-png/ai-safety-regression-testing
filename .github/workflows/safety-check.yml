@@ -14,3 +14,15 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           MODEL_PROVIDER: ${{ vars.MODEL_PROVIDER || 'cloudflare' }}
+
+      # if: always() because a regression makes the previous step exit 1 —
+      # that's exactly the run someone most wants the HTML report from.
+      - name: Upload Safety Diff report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: safety-diff-report
+          path: |
+            safety_diff.html
+            replay.html
+          if-no-files-found: warn
