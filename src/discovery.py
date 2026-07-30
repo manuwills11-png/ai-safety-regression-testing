@@ -41,14 +41,16 @@ def run_discovery_single_category(
     return records
 
 
-def run_full_discovery(model_variant: str = "v2", output_file: str | None = None) -> dict:
+def run_full_discovery(
+    model_variant: str = "v2", output_file: str | None = None, iterations: int = 3
+) -> dict:
     """Run discovery across all 4 risk categories and save the results as an archive."""
     all_records: list[ArchiveRecord] = []
 
     for category in CATEGORIES:
         print(f"\n=== {category} ===")
         records = run_discovery_single_category(
-            category, iterations=3, target_variant=model_variant
+            category, iterations=iterations, target_variant=model_variant
         )
         all_records.extend(records)
 

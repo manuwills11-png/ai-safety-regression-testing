@@ -4,6 +4,8 @@ __pycache__/
 *.pyc
 .DS_Store
 
-# Live-generated run archives at repo root (contain real attack content) —
-# anchored so it doesn't also match the deliberate fixtures in examples/
+# Live-generated run archives and rendered HTML at repo root — anchored so
+# they don't also match the deliberate fixtures/artifacts in examples/
 /archive_*.json
+/safety_diff.html
+/replay.html

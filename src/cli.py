@@ -12,13 +12,7 @@ import click  # noqa: E402
 from .discovery import run_full_discovery  # noqa: E402
 from .models.schemas import RiskCategory  # noqa: E402
 from .regression import print_safety_diff, produce_safety_diff  # noqa: E402
-
-ROOT_CAUSES = {
-    "roleplay_bypass": "Roleplay Bypass",
-    "prompt_injection": "Prompt Injection",
-    "multi_turn_escalation": "Multi-turn Escalation",
-    "tool_misuse": "Tool Misuse",
-}
+from .render import ROOT_CAUSES, render_replay_html, render_safety_diff_html  # noqa: E402
 
 
 @click.group()
@@ -34,10 +28,11 @@ def cli():
     help="Target model variant (v1 = strong safety prompt, v2 = weak).",
 )
 @click.option("--output", default=None, help="Archive output file")
-def run(variant, output):
+@click.option("--iterations", default=3, type=int, help="Attack iterations per category")
+def run(variant, output, iterations):
     """Execute a full discovery run across all 4 risk categories."""
     print(f"Running discovery against {variant}...")
-    archive = run_full_discovery(model_variant=variant, output_file=output)
+    archive = run_full_discovery(model_variant=variant, output_file=output, iterations=iterations)
     print(f"Archive saved: {output or archive['run_id']}")
 
 
@@ -53,6 +48,10 @@ def diff(archive_v1, archive_v2):
 
     result = produce_safety_diff(a1, a2)
     print_safety_diff(result)
+
+    html_path = render_safety_diff_html(result)
+    print(f"\nSafety Diff rendered to {html_path}")
+
     sys.exit(0 if result["passed"] else 1)
 
 
@@ -97,6 +96,9 @@ def replay(archive, attack_index):
     print(f"Confidence: {record['confidence']}")
     print(f"Judge reasoning: {record['reasoning']}\n")
     print(f"Root Cause: {ROOT_CAUSES.get(record['category'], 'Unknown')}")
+
+    html_path = render_replay_html(record)
+    print(f"\nReplay rendered to {html_path}")
 
 
 if __name__ == "__main__":

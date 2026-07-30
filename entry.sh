@@ -5,9 +5,13 @@ VARIANT=${1:-v2}
 echo "Running safety regression check (variant: $VARIANT)..."
 
 if [ "$DEMO_MODE" = "1" ]; then
+    # Points at the synthetic fixtures (a real regression, checkmarks flip)
+    # for the primary demo visual — see DEMO.md. The real live-discovery
+    # archives (archive_v1_cached.json / archive_v2_cached.json) stay in
+    # examples/ as a secondary "clean deploy" proof point, not the default.
     echo "DEMO_MODE=1: using cached archives instead of live model calls..."
-    cp examples/archive_v1_cached.json archive_v1.json
-    cp examples/archive_v2_cached.json archive_v2.json
+    cp examples/archive_v1_synthetic_test.json archive_v1.json
+    cp examples/archive_v2_synthetic_test.json archive_v2.json
     ARCHIVE_V1="archive_v1.json"
 else
     if [ -f archive_latest.json ]; then
