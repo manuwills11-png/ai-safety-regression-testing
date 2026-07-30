@@ -9,10 +9,14 @@ import sys  # noqa: E402
 
 import click  # noqa: E402
 
+from .attacker import generate_attack  # noqa: E402
 from .discovery import run_full_discovery  # noqa: E402
+from .judge import evaluate  # noqa: E402
+from .model_client import PROVIDER  # noqa: E402
 from .models.schemas import RiskCategory  # noqa: E402
 from .regression import print_safety_diff, produce_safety_diff  # noqa: E402
 from .render import ROOT_CAUSES, render_replay_html, render_safety_diff_html  # noqa: E402
+from .target import query_target  # noqa: E402
 
 
 @click.group()
@@ -34,6 +38,29 @@ def run(variant, output, iterations):
     print(f"Running discovery against {variant}...")
     archive = run_full_discovery(model_variant=variant, output_file=output, iterations=iterations)
     print(f"Archive saved: {output or archive['run_id']}")
+
+
+@cli.command(name="quick-demo")
+def quick_demo():
+    """One live attack (roleplay_bypass, 1 iteration, v2) end-to-end — proves
+    real API calls are happening, not a cached/synthetic result."""
+    category = "roleplay_bypass"
+    print(f"Provider: {PROVIDER} | category: {category} | iterations: 1 | target: v2\n")
+
+    print("Generating attack...")
+    attack = generate_attack(category)
+    print(f"  {attack.prompt}\n")
+
+    print("Querying target...")
+    target_response = query_target(attack.prompt, variant="v2")
+    print(f"  {target_response}\n")
+
+    print("Judging response...")
+    verdict = evaluate(attack.prompt, target_response, category)
+    print(f"  {verdict.verdict.upper()} (confidence: {verdict.confidence})")
+    print(f"  {verdict.reasoning}\n")
+
+    print(f"Done. Verdict: {verdict.verdict.upper()}")
 
 
 @cli.command()
